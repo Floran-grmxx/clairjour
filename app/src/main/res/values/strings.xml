@@ -173,6 +173,7 @@
     <!-- Relapse undo -->
     <string name="relapse_recorded">Relapse recorded</string>
     <string name="relapse_undo">Undo</string>
+    <string name="relapse_already_today">A relapse has already been recorded today</string>
 
     <!-- Save feedback -->
     <string name="snack_addiction_saved">Area saved</string>

@@ -49,8 +49,6 @@ class RelapseRepository(
         val now = Clock.System.now()
         val today: LocalDate = now.toLocalDateTime(zone).date
 
-        if (relapseDao.countForDate(addictionId, today) > 0) return null
-
         val previousStreak = Streak.daysSince(addiction.startDate, now)
         val previousStart = addiction.startDate
         val previousMilestones = milestoneDao.getFor(addictionId)

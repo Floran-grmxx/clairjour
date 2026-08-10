@@ -161,6 +161,7 @@
     <!-- Annulation rechute -->
     <string name="relapse_recorded">Rechute enregistrée</string>
     <string name="relapse_undo">Annuler</string>
+    <string name="relapse_already_today">Une rechute a déjà été enregistrée aujourd\'hui</string>
 
     <!-- Feedback sauvegarde -->
     <string name="snack_addiction_saved">Domaine enregistré</string>

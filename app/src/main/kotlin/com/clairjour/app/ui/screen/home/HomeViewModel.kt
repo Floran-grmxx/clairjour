@@ -137,7 +137,11 @@ class HomeViewModel(
      * Reports a relapse and returns true if the write succeeded. When true, callers
      * can offer an "Undo" action for up to 5s via [undoLastRelapse].
      */
-    fun reportRelapse(note: String?, onUndoWindowOpen: () -> Unit = {}) {
+    fun reportRelapse(
+        note: String?,
+        onUndoWindowOpen: () -> Unit = {},
+        onBlocked: () -> Unit = {}
+    ) {
         val current = uiState.value.current ?: return
         viewModelScope.launch {
             try {
@@ -154,9 +158,12 @@ class HomeViewModel(
                         // report may have replaced it in the meantime).
                         if (pendingRelapseSnapshot === snapshot) pendingRelapseSnapshot = null
                     }
+                } else {
+                    // null = relapse already recorded today or addiction not found
+                    onBlocked()
                 }
             } catch (_: Exception) {
-                // relapse failure is silent
+                onBlocked()
             }
         }
     }

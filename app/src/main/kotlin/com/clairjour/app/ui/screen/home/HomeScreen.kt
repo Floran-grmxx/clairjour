@@ -108,6 +108,7 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val relapseRecordedText = stringResource(R.string.relapse_recorded)
     val relapseUndoText = stringResource(R.string.relapse_undo)
+    val relapseAlreadyTodayText = stringResource(R.string.relapse_already_today)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -130,68 +131,75 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { scaffoldPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(scaffoldPadding)) {
-        // Single-screen layout: no vertical scroll. Content compressed so everything fits
-        // on standard phone heights (~700dp usable). BrandBadge dropped, spacers reduced.
+        val current = state.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(contentPadding)
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            if (state.addictions.size > 1) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.addictions, key = { it.id }) { addiction ->
-                        val isCurrent = state.current?.id == addiction.id
-                        FilterChip(
-                            selected = isCurrent,
-                            onClick = { vm.select(addiction.id) },
-                            label = { Text(addiction.name) }
-                        )
+            // Scrollable main content — adapts to any screen height.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 8.dp)
+            ) {
+                if (state.addictions.size > 1) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(state.addictions, key = { it.id }) { addiction ->
+                            val isCurrent = state.current?.id == addiction.id
+                            FilterChip(
+                                selected = isCurrent,
+                                onClick = { vm.select(addiction.id) },
+                                label = { Text(addiction.name) }
+                            )
+                        }
                     }
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-
-            val current = state.current
-            if (current == null) {
-                EmptyState(onAdd = onAddAddiction)
-            } else {
-                CounterBlock(addiction = current, startDate = current.startDate)
-                Spacer(Modifier.height(12.dp))
-
-                state.nextMilestone?.let { next ->
-                    val remaining = (next.days - state.streakDays).coerceAtLeast(0)
-                    MilestoneProgress(
-                        label = stringResource(
-                            R.string.home_next_milestone,
-                            stringResource(next.labelRes),
-                            remaining
-                        ),
-                        progress = state.progressToNext
-                    )
-                    Spacer(Modifier.height(12.dp))
-                }
-
-                PledgeCard(done = state.pledgeDone, onPledge = { showPledgeDialog = true })
-                Spacer(Modifier.height(8.dp))
-
-                state.motivation?.let { motivation ->
-                    MotivationCard(motivation.textFor(LocalConfiguration.current.locales[0].language))
                     Spacer(Modifier.height(8.dp))
                 }
 
-                JournalQuickCard(
-                    written = state.journalWrittenToday,
-                    onOpen = onOpenJournalEditor
-                )
+                if (current == null) {
+                    EmptyState(onAdd = onAddAddiction)
+                } else {
+                    CounterBlock(addiction = current, startDate = current.startDate)
+                    Spacer(Modifier.height(12.dp))
 
-                // Push the relapse text button to the very bottom.
-                Spacer(Modifier.weight(1f))
+                    state.nextMilestone?.let { next ->
+                        val remaining = (next.days - state.streakDays).coerceAtLeast(0)
+                        MilestoneProgress(
+                            label = stringResource(
+                                R.string.home_next_milestone,
+                                stringResource(next.labelRes),
+                                remaining
+                            ),
+                            progress = state.progressToNext
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
 
+                    PledgeCard(done = state.pledgeDone, onPledge = { showPledgeDialog = true })
+                    Spacer(Modifier.height(8.dp))
+
+                    state.motivation?.let { motivation ->
+                        MotivationCard(motivation.textFor(LocalConfiguration.current.locales[0].language))
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    JournalQuickCard(
+                        written = state.journalWrittenToday,
+                        onOpen = onOpenJournalEditor
+                    )
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+
+            // Relapse button fixed above the snackbar zone — 80dp bottom clears the snackbar height.
+            if (current != null) {
                 TextButton(
                     onClick = { showRelapseDialog = true },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 80.dp)
                 ) {
                     Text(
                         stringResource(R.string.detail_report_relapse),
@@ -261,20 +269,28 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val note = relapseNote.ifBlank { null }
-                    vm.reportRelapse(note) {
-                        coroutineScope.launch {
-                            // Long ≈ 10s: comfortably wider than the VM's 5s undo window,
-                            // so the user always sees the action before it expires.
-                            val result = snackbarHostState.showSnackbar(
-                                message = relapseRecordedText,
-                                actionLabel = relapseUndoText,
-                                duration = androidx.compose.material3.SnackbarDuration.Long
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                vm.undoLastRelapse()
+                    vm.reportRelapse(
+                        note = note,
+                        onUndoWindowOpen = {
+                            coroutineScope.launch {
+                                // Long ≈ 10s: comfortably wider than the VM's 5s undo window,
+                                // so the user always sees the action before it expires.
+                                val result = snackbarHostState.showSnackbar(
+                                    message = relapseRecordedText,
+                                    actionLabel = relapseUndoText,
+                                    duration = androidx.compose.material3.SnackbarDuration.Long
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    vm.undoLastRelapse()
+                                }
+                            }
+                        },
+                        onBlocked = {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(relapseAlreadyTodayText)
                             }
                         }
-                    }
+                    )
                     relapseNote = ""
                     showRelapseDialog = false
                 }) { Text(stringResource(R.string.action_confirm)) }
@@ -415,7 +431,7 @@ private fun CounterBlock(
         Text(
             text = elapsedDays.toString(),
             style = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 108.sp,
+                fontSize = 80.sp,
                 fontWeight = FontWeight.Light
             ),
             color = MaterialTheme.colorScheme.onBackground
