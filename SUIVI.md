@@ -1,7 +1,7 @@
 # Clairjour — SUIVI.md
 
 ## 🧭 Ligne directrice
-**État** (2026-10-06, v1.1.0-dev) : **Bouclier Instagram terminé et validé sur téléphone** (Instagram 449, HyperOS) — les 8 règles testées en réel (Reels → accueil, reel DM unique, reels ailleurs, reels profils, grille Explorer masquée, recherche forcée sur Comptes, fil masqué, stories), cache retiré hors Instagram, dialogue 30 s OK. 52 tests unitaires OK. Prochaine priorité : usage réel quelques jours, puis release signée + déclaration Accessibilité Play Console.
+**État** (2026-10-06, v1.1.0-dev) : **Bouclier Instagram terminé et validé sur téléphone** (Instagram 449, HyperOS) — les 8 règles testées en réel (Reels → accueil, reel DM unique, reels ailleurs, reels profils, grille Explorer masquée, recherche forcée sur Comptes, fil masqué, stories), cache retiré hors Instagram, dialogue 10 s OK. 52 tests unitaires OK. Prochaine priorité : usage réel quelques jours, puis release signée + déclaration Accessibilité Play Console.
 
 ## ✅ Fait (v0.1 + v0.2)
 ### v0.1 initial
@@ -50,11 +50,11 @@
 - [x] Fix jalons re-affichés après rechute (2026-08-02) — `markAllSeenFor` remplace `clearFor` dans `reportRelapse` ; undo utilise `insertAll` REPLACE. `compileDebugKotlin` + `testDebugUnitTest` OK.
 
 ## 🛡️ v1.1 — Bouclier Instagram (plan)
-Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle intacte) et réagit par retour auto, clic forcé ou cache opaque. Règles toutes modulables, désactivation freinée par 30 s d'attente.
+Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle intacte) et réagit par retour auto, clic forcé ou cache opaque. Règles toutes modulables, désactivation freinée par 10 s d'attente.
 - [x] **B1** Cœur pur testable `shield/` : `ScreenNode` (arbre léger), `InstagramSelectors` (IDs candidats centralisés), `InstagramScreenClassifier`, `ShieldEngine` (sessions reel + origine, cooldown anti-boucle)
 - [x] **B2** Règles (`ShieldRule`) : onglet Reels, reels DM = un seul, reels ouverts ailleurs (fil/notifs), reels depuis profil, grille Explorer cachée, recherche = Comptes forcé, fil d'accueil caché, stories
 - [x] **B3** Service Android : capture arbre, debounce, actions (BACK, clic, overlay `TYPE_ACCESSIBILITY_OVERLAY`), lecture règles via DataStore
-- [x] **B4** UI : écran « Bouclier Instagram » (statut service, interrupteurs, dialogue 30 s pour désactiver, avertissement Play Store avant activation, mode diagnostic en debug)
+- [x] **B4** UI : écran « Bouclier Instagram » (statut service, interrupteurs, dialogue 10 s pour désactiver, avertissement Play Store avant activation, mode diagnostic en debug)
 - [x] **B5** Tests unitaires classifieur + moteur
 - [x] **B6** Calibration des sélecteurs sur téléphone (adb + logcat `ClairjourShield`) et tests réels des 8 règles
 - [x] **B7** Build debug + tests + commit/push
@@ -68,6 +68,7 @@ Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle i
 - [ ] **v0.3 features possibles** : auto-backup WorkManager (nécessite décision sur stockage passphrase), Vico 2.0.0 stable dès sortie, remontée des raisons perso sur HomeScreen
 
 ## 📋 Notes / gotchas
+- **Bouclier — compteur de désactivation (10 s)** : l'échéance est stockée dans `ShieldViewModel` (`PendingDisable.confirmableAtMillis`, horloge `elapsedRealtime`), pas dans le dialogue → une rotation d'écran ne remet plus le compteur à zéro ; `confirmDisable()` refuse aussi toute confirmation anticipée. adb ne peut pas forcer la rotation sur HyperOS (`WRITE_SETTINGS` refusé).
 - **Bouclier — calibration** : la version debug embarque une télécommande (`adb shell am broadcast -a com.clairjour.shield.DEBUG -e command dump|back|click_id|click_label|scroll|tap|type|enter|rule_on|rule_off|shield_on|shield_off -e argument '...'`), logs sous le tag `ClairjourShield`. Le geste `tap` n'existe qu'en debug (`src/debug/res/xml/instagram_shield_service.xml` ajoute `canPerformGestures`).
 - **Bouclier — « Paramètre restreint »** (Android 13+, app hors Play Store) : l'interrupteur d'accessibilité est grisé → `adb shell cmd appops set com.clairjour.app.debug ACCESS_RESTRICTED_SETTINGS allow` (ou Infos appli → ⋮ → Autoriser les paramètres restreints).
 - **Bouclier — limites connues** : les vidéos qui se lancent toutes seules dans le fil ne sont pas bloquées (seulement à l'ouverture en plein écran) ; les libellés EN des onglets de recherche n'ont pas été vérifiés (interface testée en FR).

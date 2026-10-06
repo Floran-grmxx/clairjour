@@ -48,7 +48,6 @@ import com.clairjour.app.R
 import com.clairjour.app.data.AppContainer
 import com.clairjour.app.shield.ShieldRule
 import com.clairjour.app.shield.ShieldServiceStatus
-import com.clairjour.app.shield.ShieldSettings
 import com.clairjour.app.ui.components.viewModelFactoryOf
 import kotlinx.coroutines.delay
 
@@ -111,8 +110,12 @@ fun ShieldScreen(container: AppContainer, onBack: () -> Unit) {
         )
     }
 
-    state.pendingDisable?.let {
-        DelayedDisableDialog(onConfirm = vm::confirmDisable, onDismiss = vm::cancelDisable)
+    state.pendingDisable?.let { pending ->
+        DelayedDisableDialog(
+            secondsLeft = { vm.secondsBeforeConfirm(pending) },
+            onConfirm = vm::confirmDisable,
+            onDismiss = vm::cancelDisable
+        )
     }
 
     Scaffold(
@@ -242,12 +245,12 @@ private fun ShieldToggleRow(
 
 /** Switching a protection off requires waiting, so that the urge has time to pass. */
 @Composable
-private fun DelayedDisableDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    var secondsLeft by remember { mutableIntStateOf(ShieldSettings.DISABLE_DELAY_SECONDS) }
+private fun DelayedDisableDialog(secondsLeft: () -> Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    var displayedSeconds by remember { mutableIntStateOf(secondsLeft()) }
     LaunchedEffect(Unit) {
-        while (secondsLeft > 0) {
-            delay(1_000)
-            secondsLeft--
+        while (displayedSeconds > 0) {
+            delay(COUNTDOWN_REFRESH_MILLIS)
+            displayedSeconds = secondsLeft()
         }
     }
     AlertDialog(
@@ -255,9 +258,9 @@ private fun DelayedDisableDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.shield_disable_title)) },
         text = { Text(stringResource(R.string.shield_disable_body)) },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = secondsLeft == 0) {
+            TextButton(onClick = onConfirm, enabled = displayedSeconds == 0) {
                 Text(
-                    if (secondsLeft > 0) stringResource(R.string.shield_disable_wait, secondsLeft)
+                    if (displayedSeconds > 0) stringResource(R.string.shield_disable_wait, displayedSeconds)
                     else stringResource(R.string.shield_disable_confirm)
                 )
             }
@@ -267,3 +270,5 @@ private fun DelayedDisableDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         }
     )
 }
+
+private const val COUNTDOWN_REFRESH_MILLIS = 200L

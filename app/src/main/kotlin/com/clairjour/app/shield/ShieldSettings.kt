@@ -11,6 +11,6 @@ data class ShieldSettings(
 
     companion object {
         /** Waiting time before a protection can be switched off. */
-        const val DISABLE_DELAY_SECONDS = 30
+        const val DISABLE_DELAY_SECONDS = 10
     }
 }

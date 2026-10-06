@@ -1,5 +1,6 @@
 package com.clairjour.app.ui.screen.shield
 
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.clairjour.app.data.prefs.SettingsRepository
@@ -12,11 +13,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** A protection waiting for the delayed confirmation before being switched off. */
-sealed interface PendingDisable {
-    data object AllProtections : PendingDisable
-    data class Rule(val rule: ShieldRule) : PendingDisable
+/** What the user asked to switch off. */
+sealed interface DisableTarget {
+    data object AllProtections : DisableTarget
+    data class Rule(val rule: ShieldRule) : DisableTarget
 }
+
+/**
+ * A protection waiting for the delayed confirmation. The deadline lives here, not in the
+ * dialog, so that rotating the screen does not restart the countdown.
+ */
+data class PendingDisable(val target: DisableTarget, val confirmableAtMillis: Long)
 
 data class ShieldUiState(
     val settings: ShieldSettings = ShieldSettings(),
@@ -24,7 +31,10 @@ data class ShieldUiState(
     val pendingDisable: PendingDisable? = null
 )
 
-class ShieldViewModel(private val settingsRepository: SettingsRepository) : ViewModel() {
+class ShieldViewModel(
+    private val settingsRepository: SettingsRepository,
+    private val clock: () -> Long = SystemClock::elapsedRealtime
+) : ViewModel() {
 
     private val serviceEnabled = MutableStateFlow(false)
     private val pendingDisable = MutableStateFlow<PendingDisable?>(null)
@@ -44,21 +54,34 @@ class ShieldViewModel(private val settingsRepository: SettingsRepository) : View
     /** Switching on is immediate; switching off goes through the delayed confirmation. */
     fun onMasterChange(enabled: Boolean) {
         if (enabled) viewModelScope.launch { settingsRepository.setShieldEnabled(true) }
-        else pendingDisable.value = PendingDisable.AllProtections
+        else requestDisable(DisableTarget.AllProtections)
     }
 
     fun onRuleChange(rule: ShieldRule, enabled: Boolean) {
         if (enabled) viewModelScope.launch { settingsRepository.setShieldRule(rule, true) }
-        else pendingDisable.value = PendingDisable.Rule(rule)
+        else requestDisable(DisableTarget.Rule(rule))
+    }
+
+    private fun requestDisable(target: DisableTarget) {
+        val delayMillis = ShieldSettings.DISABLE_DELAY_SECONDS * 1_000L
+        pendingDisable.value = PendingDisable(target, clock() + delayMillis)
+    }
+
+    /** Seconds left before the switch-off can be confirmed (0 when allowed). */
+    fun secondsBeforeConfirm(pending: PendingDisable): Int {
+        val remainingMillis = (pending.confirmableAtMillis - clock()).coerceAtLeast(0)
+        return ((remainingMillis + 999) / 1_000).toInt()
     }
 
     fun confirmDisable() {
         val pending = pendingDisable.value ?: return
+        // The button is disabled during the countdown; this guard covers any early call.
+        if (secondsBeforeConfirm(pending) > 0) return
         pendingDisable.value = null
         viewModelScope.launch {
-            when (pending) {
-                PendingDisable.AllProtections -> settingsRepository.setShieldEnabled(false)
-                is PendingDisable.Rule -> settingsRepository.setShieldRule(pending.rule, false)
+            when (val target = pending.target) {
+                DisableTarget.AllProtections -> settingsRepository.setShieldEnabled(false)
+                is DisableTarget.Rule -> settingsRepository.setShieldRule(target.rule, false)
             }
         }
     }
