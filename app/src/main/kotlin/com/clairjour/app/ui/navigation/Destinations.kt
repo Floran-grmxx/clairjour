@@ -9,6 +9,7 @@ object Destinations {
     const val JOURNAL_EDITOR = "journal/editor?date={date}"
     const val STATS = "stats"
     const val SETTINGS = "settings"
+    const val SHIELD = "shield"
     const val ADDICTION_EDIT = "addiction/edit?addictionId={addictionId}"
     const val CRISIS = "crisis?addictionId={addictionId}"
 

@@ -250,4 +250,42 @@
         <item>Anger</item>
         <item>Habit</item>
     </string-array>
+    <!-- Instagram shield -->
+    <string name="shield_title">Instagram shield</string>
+    <string name="shield_settings_entry_body">Block Reels, Explore and endless scrolling while keeping messages</string>
+    <string name="shield_service_label">Clairjour — Instagram shield</string>
+    <string name="shield_service_description">Blocks the Instagram areas you choose (Reels, Explore, feed…) while keeping messages and profile search. Only the Instagram screen is read, on your phone, and nothing is stored or sent.</string>
+    <string name="shield_cover_message">Hidden by Clairjour</string>
+    <string name="shield_status_on">Shield active</string>
+    <string name="shield_status_off">Shield not activated</string>
+    <string name="shield_status_off_body">Android must allow Clairjour to read the Instagram screen.</string>
+    <string name="shield_activate">Activate</string>
+    <string name="shield_master">Protections enabled</string>
+    <string name="shield_rules_section">What to block</string>
+    <string name="shield_rule_reels_tab">Reels tab</string>
+    <string name="shield_rule_reels_tab_body">Opening Reels takes you back to the home tab</string>
+    <string name="shield_rule_direct_single_reel">Only reels sent in messages</string>
+    <string name="shield_rule_direct_single_reel_body">A reel received in a conversation plays; swiping to the next one takes you back</string>
+    <string name="shield_rule_other_reels">Reels opened elsewhere</string>
+    <string name="shield_rule_other_reels_body">Reels opened from the feed, notifications or search</string>
+    <string name="shield_rule_profile_reels">Reels from profiles</string>
+    <string name="shield_rule_profile_reels_body">Reels opened from someone\'s profile</string>
+    <string name="shield_rule_explore_grid">Explore grid</string>
+    <string name="shield_rule_explore_grid_body">Suggested posts and reels are hidden; the search bar stays usable</string>
+    <string name="shield_rule_search_accounts_only">Search: accounts only</string>
+    <string name="shield_rule_search_accounts_only_body">Search results always open on the Accounts tab</string>
+    <string name="shield_rule_home_feed">Home feed</string>
+    <string name="shield_rule_home_feed_body">The feed is hidden; stories stay visible</string>
+    <string name="shield_rule_stories">Stories</string>
+    <string name="shield_rule_stories_body">Opening a story takes you back</string>
+    <string name="shield_disable_title">Switch off this protection?</string>
+    <string name="shield_disable_body">Take a breath. If the urge is still there in a few seconds, you can confirm.</string>
+    <string name="shield_disable_wait">Wait %1$d s</string>
+    <string name="shield_disable_confirm">Switch off</string>
+    <string name="shield_disclosure_title">Before activating</string>
+    <string name="shield_disclosure_body">Clairjour uses Android\'s accessibility service to recognise Instagram screens (Reels, Explore, search, conversations) and to go back, tap the Accounts tab or hide an area for you.\n\n• Only the Instagram screen is read; other apps are ignored.\n• Everything happens on your phone: nothing is stored, collected or sent.\n• You can switch it off at any time in Android\'s accessibility settings.\n\nOn the next screen, choose \"Clairjour — Instagram shield\" and turn it on.</string>
+    <string name="shield_disclosure_accept">I agree</string>
+    <string name="shield_disclosure_decline">Not now</string>
+    <string name="shield_diagnostic">Diagnostic mode (debug)</string>
+    <string name="shield_diagnostic_body">Logs the Instagram screen structure to logcat (tag ClairjourShield)</string>
 </resources>

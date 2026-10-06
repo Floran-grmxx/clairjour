@@ -15,6 +15,7 @@ import com.clairjour.app.ui.screen.journal.JournalEditorScreen
 import com.clairjour.app.ui.screen.journal.JournalScreen
 import com.clairjour.app.ui.screen.onboarding.OnboardingScreen
 import com.clairjour.app.ui.screen.settings.SettingsScreen
+import com.clairjour.app.ui.screen.shield.ShieldScreen
 import com.clairjour.app.ui.screen.stats.StatsScreen
 import kotlinx.datetime.LocalDate
 
@@ -99,7 +100,14 @@ fun ClairjourNavHost(
                 container = container,
                 contentPadding = contentPadding,
                 onEditAddiction = { navController.navigate(Destinations.addictionEdit(it)) },
-                onAddAddiction = { navController.navigate(Destinations.addictionEdit()) }
+                onAddAddiction = { navController.navigate(Destinations.addictionEdit()) },
+                onOpenShield = { navController.navigate(Destinations.SHIELD) }
+            )
+        }
+        composable(Destinations.SHIELD) {
+            ShieldScreen(
+                container = container,
+                onBack = { navController.popBackStack() }
             )
         }
         composable(

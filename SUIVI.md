@@ -1,7 +1,7 @@
 # Clairjour — SUIVI.md
 
 ## 🧭 Ligne directrice
-**État** (2026-08-02, v1.0.0-beta) : Bêta 1.0 stable. Correctif du jour : les pop-ups jalons ne se ré-affichent plus après une rechute — `reportRelapse` marque désormais les jalons existants `seen=true` (au lieu de les supprimer), donc l'`insert IGNORE` en ré-atteignant le même jalon ne recrée pas d'entrée non vue. Undo passe à `insertAll` (REPLACE) pour restaurer l'état `seenByUser` original. Build debug + tests unitaires OK. Prochaine étape : test device + build release signé + publication.
+**État** (2026-10-06, v1.1.0-dev) : Bouclier Instagram codé (package `shield/` + écran Paramètres → Bouclier Instagram), `assembleDebug` OK, 48 tests unitaires OK (dont 23 bouclier). Prochaine priorité : **B6 calibration des sélecteurs sur téléphone** — les IDs Instagram dans `InstagramSelectors.kt` sont des candidats non vérifiés.
 
 ## ✅ Fait (v0.1 + v0.2)
 ### v0.1 initial
@@ -49,6 +49,16 @@
 - [x] `./gradlew testDebugUnitTest` **SUCCESSFUL** (2026-07-21)
 - [x] Fix jalons re-affichés après rechute (2026-08-02) — `markAllSeenFor` remplace `clearFor` dans `reportRelapse` ; undo utilise `insertAll` REPLACE. `compileDebugKotlin` + `testDebugUnitTest` OK.
 
+## 🛡️ v1.1 — Bouclier Instagram (plan)
+Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle intacte) et réagit par retour auto, clic forcé ou cache opaque. Règles toutes modulables, désactivation freinée par 30 s d'attente.
+- [x] **B1** Cœur pur testable `shield/` : `ScreenNode` (arbre léger), `InstagramSelectors` (IDs candidats centralisés), `InstagramScreenClassifier`, `ShieldEngine` (sessions reel + origine, cooldown anti-boucle)
+- [x] **B2** Règles (`ShieldRule`) : onglet Reels, reels DM = un seul, reels ouverts ailleurs (fil/notifs), reels depuis profil, grille Explorer cachée, recherche = Comptes forcé, fil d'accueil caché, stories
+- [x] **B3** Service Android : capture arbre, debounce, actions (BACK, clic, overlay `TYPE_ACCESSIBILITY_OVERLAY`), lecture règles via DataStore
+- [x] **B4** UI : écran « Bouclier Instagram » (statut service, interrupteurs, dialogue 30 s pour désactiver, avertissement Play Store avant activation, mode diagnostic en debug)
+- [x] **B5** Tests unitaires classifieur + moteur
+- [ ] **B6** Calibration des sélecteurs sur téléphone (adb + logcat `ClairjourShield`) et tests réels des 8 règles
+- [ ] **B7** Build debug + tests + commit/push
+
 ## ⏳ Reste à faire
 - [ ] Installer et tester APK sur téléphone (`adb install app-debug.apk`)
 - [ ] Vérifier sur device : chiffrement backup (export + réimport avec passphrase), swipe-to-delete journal, undo rechute, Crisis screen (dial 3114), suppression addiction
@@ -58,6 +68,10 @@
 - [ ] **v0.3 features possibles** : auto-backup WorkManager (nécessite décision sur stockage passphrase), Vico 2.0.0 stable dès sortie, remontée des raisons perso sur HomeScreen
 
 ## 📋 Notes / gotchas
+- **Téléphone de test (Redmi Note 13 Pro+, HyperOS / Android 14, Instagram 449.0.0.52.84)** : sans l'option « Débogage USB (paramètres de sécurité) », adb refuse `settings put secure` (`SecurityException: WRITE_SECURE_SETTINGS`) et `input tap/keyevent` (`INJECT_EVENTS`). `uiautomator dump` échoue sur Instagram (« could not get idle state », vidéos) → calibrer via le mode diagnostic du service + `adb logcat -s ClairjourShield`. Sous Git Bash, préfixer `MSYS_NO_PATHCONV=1` pour les chemins `/sdcard/...`. Si l'appareil est `offline` : `adb kill-server` puis `adb devices`.
+- **Bouclier — sélecteurs Instagram** : tous dans `shield/InstagramSelectors.kt` (Instagram appelle les Reels « clips » et les Stories « reels »). Après une MAJ Instagram qui casse la détection : activer le mode diagnostic (debug), `adb logcat -s ClairjourShield`, corriger les IDs.
+- **Bouclier — pas de filtre `packageNames`** dans `instagram_shield_service.xml` : volontaire, sinon le service ne voit pas Instagram passer en arrière-plan et le cache opaque resterait sur l'écran d'accueil. Les événements des autres apps sont ignorés dans le code.
+- **Bouclier — Play Console** : déclarer l'usage de l'API Accessibilité (non-outil d'accessibilité, `isAccessibilityTool=false`) avec vidéo de démo + l'avertissement in-app (dialogue « Avant d'activer »). Texte : « Clairjour utilise l'API AccessibilityService uniquement pour reconnaître les écrans d'Instagram choisis par l'utilisateur (Reels, Explorer, recherche) et y revenir en arrière ou les masquer, afin de l'aider à limiter le défilement compulsif. Aucune donnée n'est collectée, stockée ni transmise. »
 - **Migration DB v1→v2** : `fallbackToDestructiveMigration()` actif — passage à SQLCipher réinitialise la DB de toute façon (bad-magic sur ancien fichier plaintext). Les utilisateurs v0.1 doivent réonboarder OU utiliser un backup JSON legacy (pas chiffré) exporté avant la mise à jour. À documenter dans le changelog.
 - **BackupRepository.import** est backward-compat : détecte le magic `CLAIRJOUR1` et fallback sur JSON legacy si absent — permet la migration en douceur des rares testeurs v0.1.
 - **Passphrase backup** : jamais stockée. Le user doit la retenir. C'est un choix conscient (sécurité > praticité). Une auto-backup nécessiterait de la stocker dans le Keystore Android, ce qui serait à trancher.

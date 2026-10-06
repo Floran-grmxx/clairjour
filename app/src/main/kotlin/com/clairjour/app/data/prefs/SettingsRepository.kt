@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.clairjour.app.shield.ShieldRule
+import com.clairjour.app.shield.ShieldSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -38,6 +40,9 @@ class SettingsRepository(private val context: Context) {
         val notifPledgeMinute = intPreferencesKey("notif_pledge_minute")
         val notifJournalHour = intPreferencesKey("notif_journal_hour")
         val notifJournalMinute = intPreferencesKey("notif_journal_minute")
+        val shieldEnabled = booleanPreferencesKey("shield_enabled")
+        val shieldDiagnostic = booleanPreferencesKey("shield_diagnostic")
+        fun shieldRule(rule: ShieldRule) = booleanPreferencesKey("shield_rule_${rule.key}")
     }
 
     val onboardingDoneFlow: Flow<Boolean> = context.dataStore.data.map {
@@ -101,5 +106,27 @@ class SettingsRepository(private val context: Context) {
             it[Keys.notifJournalHour] = hour
             it[Keys.notifJournalMinute] = minute
         }
+    }
+
+    val shieldSettingsFlow: Flow<ShieldSettings> = context.dataStore.data.map { preferences ->
+        ShieldSettings(
+            enabled = preferences[Keys.shieldEnabled] ?: true,
+            rules = ShieldRule.entries.filter {
+                preferences[Keys.shieldRule(it)] ?: it.enabledByDefault
+            }.toSet(),
+            diagnostic = preferences[Keys.shieldDiagnostic] ?: false
+        )
+    }
+
+    suspend fun setShieldEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.shieldEnabled] = enabled }
+    }
+
+    suspend fun setShieldRule(rule: ShieldRule, enabled: Boolean) {
+        context.dataStore.edit { it[Keys.shieldRule(rule)] = enabled }
+    }
+
+    suspend fun setShieldDiagnostic(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.shieldDiagnostic] = enabled }
     }
 }

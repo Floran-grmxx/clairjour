@@ -238,4 +238,42 @@
         <item>Colère</item>
         <item>Habitude</item>
     </string-array>
+    <!-- Bouclier Instagram -->
+    <string name="shield_title">Bouclier Instagram</string>
+    <string name="shield_settings_entry_body">Bloquer Reels, Explorer et le scroll infini en gardant les messages</string>
+    <string name="shield_service_label">Clairjour — Bouclier Instagram</string>
+    <string name="shield_service_description">Bloque les zones d\'Instagram que tu choisis (Reels, Explorer, fil…) en gardant les messages et la recherche de profils. Seul l\'écran d\'Instagram est lu, sur ton téléphone, et rien n\'est enregistré ni envoyé.</string>
+    <string name="shield_cover_message">Masqué par Clairjour</string>
+    <string name="shield_status_on">Bouclier actif</string>
+    <string name="shield_status_off">Bouclier non activé</string>
+    <string name="shield_status_off_body">Android doit autoriser Clairjour à lire l\'écran d\'Instagram.</string>
+    <string name="shield_activate">Activer</string>
+    <string name="shield_master">Protections activées</string>
+    <string name="shield_rules_section">Ce qu\'il faut bloquer</string>
+    <string name="shield_rule_reels_tab">Onglet Reels</string>
+    <string name="shield_rule_reels_tab_body">Ouvrir Reels te ramène sur l\'accueil</string>
+    <string name="shield_rule_direct_single_reel">Seulement les reels envoyés en message</string>
+    <string name="shield_rule_direct_single_reel_body">Un reel reçu en discussion se lance ; passer au suivant te ramène en arrière</string>
+    <string name="shield_rule_other_reels">Reels ouverts ailleurs</string>
+    <string name="shield_rule_other_reels_body">Reels ouverts depuis le fil, les notifications ou la recherche</string>
+    <string name="shield_rule_profile_reels">Reels des profils</string>
+    <string name="shield_rule_profile_reels_body">Reels ouverts depuis le profil de quelqu\'un</string>
+    <string name="shield_rule_explore_grid">Grille Explorer</string>
+    <string name="shield_rule_explore_grid_body">Publications et reels suggérés masqués ; la barre de recherche reste utilisable</string>
+    <string name="shield_rule_search_accounts_only">Recherche : comptes uniquement</string>
+    <string name="shield_rule_search_accounts_only_body">Les résultats de recherche s\'ouvrent toujours sur l\'onglet Comptes</string>
+    <string name="shield_rule_home_feed">Fil d\'accueil</string>
+    <string name="shield_rule_home_feed_body">Le fil est masqué ; les stories restent visibles</string>
+    <string name="shield_rule_stories">Stories</string>
+    <string name="shield_rule_stories_body">Ouvrir une story te ramène en arrière</string>
+    <string name="shield_disable_title">Désactiver cette protection ?</string>
+    <string name="shield_disable_body">Respire un coup. Si l\'envie est toujours là dans quelques secondes, tu pourras confirmer.</string>
+    <string name="shield_disable_wait">Attends %1$d s</string>
+    <string name="shield_disable_confirm">Désactiver</string>
+    <string name="shield_disclosure_title">Avant d\'activer</string>
+    <string name="shield_disclosure_body">Clairjour utilise le service d\'accessibilité d\'Android pour reconnaître les écrans d\'Instagram (Reels, Explorer, recherche, discussions) et, à ta place, revenir en arrière, toucher l\'onglet Comptes ou masquer une zone.\n\n• Seul l\'écran d\'Instagram est lu ; les autres apps sont ignorées.\n• Tout se passe sur ton téléphone : rien n\'est enregistré, collecté ni envoyé.\n• Tu peux le couper à tout moment dans les réglages d\'accessibilité d\'Android.\n\nSur l\'écran suivant, choisis « Clairjour — Bouclier Instagram » et active-le.</string>
+    <string name="shield_disclosure_accept">J\'accepte</string>
+    <string name="shield_disclosure_decline">Plus tard</string>
+    <string name="shield_diagnostic">Mode diagnostic (debug)</string>
+    <string name="shield_diagnostic_body">Écrit la structure de l\'écran Instagram dans logcat (tag ClairjourShield)</string>
 </resources>

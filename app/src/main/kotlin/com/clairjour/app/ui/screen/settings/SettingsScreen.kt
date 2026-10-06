@@ -17,7 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,7 +71,8 @@ fun SettingsScreen(
     container: AppContainer,
     contentPadding: PaddingValues,
     onEditAddiction: (String) -> Unit,
-    onAddAddiction: () -> Unit
+    onAddAddiction: () -> Unit,
+    onOpenShield: () -> Unit
 ) {
     val vm: SettingsViewModel = viewModel(
         factory = viewModelFactoryOf {
@@ -242,6 +245,33 @@ fun SettingsScreen(
                         ReminderScheduler.scheduleJournal(context, h, m)
                     }
                 )
+            }
+        }
+
+        Section(title = stringResource(R.string.shield_title)) {
+            Surface(
+                onClick = onOpenShield,
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.Shield,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        stringResource(R.string.shield_settings_entry_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                }
             }
         }
 
