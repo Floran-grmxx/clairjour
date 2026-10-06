@@ -44,18 +44,16 @@ object InstagramScreenClassifier {
 
     fun classify(root: ScreenNode): InstagramScreen {
         val nodes = root.walk().toList()
-        val reelViewerNode = nodes.firstOrNull { Selectors.matches(it.viewId, Selectors.reelViewerIds) }
+        val reelViewerNode = nodes.firstOrNull { Selectors.matchesAny(it.viewId, Selectors.reelViewerIds) }
 
         return InstagramScreen(
             selectedTab = selectedTab(root),
             reelViewer = reelViewerNode != null,
             reelContentKey = reelViewerNode?.let { reelContentKey(it) },
-            storyViewer = nodes.any { Selectors.matches(it.viewId, Selectors.storyViewerIds) },
-            directThread = nodes.any { Selectors.matches(it.viewId, Selectors.directThreadIds) },
-            profile = nodes.any { Selectors.matches(it.viewId, Selectors.profileIds) },
-            exploreGridBounds = nodes
-                .firstOrNull { Selectors.matches(it.viewId, Selectors.exploreGridIds) }
-                ?.bounds?.takeUnless { it.isEmpty },
+            storyViewer = nodes.any { Selectors.matchesAny(it.viewId, Selectors.storyViewerIds) },
+            directThread = nodes.any { Selectors.matchesAny(it.viewId, Selectors.directThreadIds) },
+            profile = nodes.any { Selectors.containsAny(it.viewId, Selectors.profileIdFragments) },
+            exploreGridBounds = exploreGridBounds(nodes),
             homeFeedBounds = homeFeedBounds(nodes),
             searchResultTabs = searchResultTabs(root)
         )
@@ -63,10 +61,10 @@ object InstagramScreenClassifier {
 
     private fun selectedTab(root: ScreenNode): InstagramTab? {
         val tabsById = listOf(
-            InstagramTab.HOME to Selectors.homeTabIds,
-            InstagramTab.SEARCH to Selectors.searchTabIds,
-            InstagramTab.REELS to Selectors.reelsTabIds,
-            InstagramTab.PROFILE to Selectors.profileTabIds
+            InstagramTab.HOME to Selectors.HOME_TAB_ID,
+            InstagramTab.SEARCH to Selectors.SEARCH_TAB_ID,
+            InstagramTab.REELS to Selectors.REELS_TAB_ID,
+            InstagramTab.PROFILE to Selectors.PROFILE_TAB_ID
         )
         val bottomBarMinTop = root.bounds.top + (root.bounds.height * Selectors.BOTTOM_BAR_MIN_TOP_RATIO).toInt()
         val tabsByLabel = listOf(
@@ -77,7 +75,7 @@ object InstagramScreenClassifier {
         )
         for ((node, selected) in root.walkWithSelection()) {
             if (!selected) continue
-            tabsById.firstOrNull { Selectors.matches(node.viewId, it.second) }?.let { return it.first }
+            tabsById.firstOrNull { node.viewId == it.second }?.let { return it.first }
         }
         // Fallback on content descriptions, only for nodes sitting in the bottom bar.
         for ((node, selected) in root.walkWithSelection()) {
@@ -92,7 +90,7 @@ object InstagramScreenClassifier {
         // The visible page is the largest child of the pager.
         val page = pager.children.maxByOrNull { it.bounds.height.coerceAtLeast(0) } ?: pager
         val authorLabels = page.walk()
-            .filter { Selectors.matches(it.viewId, Selectors.reelAuthorIds) }
+            .filter { Selectors.matchesAny(it.viewId, Selectors.reelAuthorIds) }
             .mapNotNull { it.label?.trim() }
             .filter { it.isNotEmpty() }
             .toList()
@@ -106,11 +104,23 @@ object InstagramScreenClassifier {
         return labels.takeIf { it.isNotEmpty() }?.joinToString("|")
     }
 
+    private fun exploreGridBounds(nodes: List<ScreenNode>): NodeBounds? {
+        val grid = nodes.firstOrNull { node ->
+            node.viewId == Selectors.EXPLORE_GRID_CONTAINER_ID &&
+                node.children.any { Selectors.matchesAny(it.viewId, Selectors.exploreGridItemIds) }
+        }?.bounds ?: return null
+        // The grid scrolls behind the search bar: keep the bar visible and usable.
+        val searchBarBottom = nodes.filter { it.viewId == Selectors.SEARCH_BAR_ID }.maxOfOrNull { it.bounds.bottom }
+        val top = maxOf(grid.top, searchBarBottom ?: grid.top)
+        return NodeBounds(grid.left, top, grid.right, grid.bottom).takeUnless { it.isEmpty }
+    }
+
     private fun homeFeedBounds(nodes: List<ScreenNode>): NodeBounds? {
-        val feed = nodes.firstOrNull { Selectors.matches(it.viewId, Selectors.homeFeedListIds) }
-            ?.bounds?.takeUnless { it.isEmpty } ?: return null
-        val trayBottom = nodes
-            .filter { Selectors.matches(it.viewId, Selectors.storiesTrayIds) && !it.bounds.isEmpty }
+        val feedNode = nodes.firstOrNull { it.viewId == Selectors.HOME_FEED_LIST_ID } ?: return null
+        val feed = feedNode.bounds.takeUnless { it.isEmpty } ?: return null
+        // The stories tray scrolls with the feed: it is only kept visible while on screen.
+        val trayBottom = feedNode.walk()
+            .filter { it.viewId == Selectors.STORIES_TRAY_ITEM_ID && !it.bounds.isEmpty }
             .maxOfOrNull { it.bounds.bottom }
         val top = maxOf(feed.top, trayBottom ?: feed.top)
         return NodeBounds(feed.left, top, feed.right, feed.bottom).takeUnless { it.isEmpty }

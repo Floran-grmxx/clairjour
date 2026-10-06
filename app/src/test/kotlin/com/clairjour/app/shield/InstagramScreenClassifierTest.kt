@@ -76,14 +76,18 @@ class InstagramScreenClassifierTest {
 
     @Test
     fun `direct thread is detected`() {
-        val screen = InstagramScreenClassifier.classify(root(ScreenNode(viewId = "direct_thread_container")))
+        val screen = InstagramScreenClassifier.classify(root(ScreenNode(viewId = "thread_fragment_container")))
         assertTrue(screen.directThread)
         assertEquals(InstagramSurface.DIRECT, screen.surface)
     }
 
     @Test
     fun `explore grid bounds are reported`() {
-        val grid = ScreenNode(viewId = "explore_grid", bounds = NodeBounds(0, 300, 1080, 2250))
+        val grid = ScreenNode(
+            viewId = "recycler_view",
+            bounds = NodeBounds(0, 300, 1080, 2250),
+            children = listOf(ScreenNode(viewId = "grid_card_layout_container", bounds = NodeBounds(0, 300, 360, 840)))
+        )
         val screen = InstagramScreenClassifier.classify(root(grid, bottomBar("search_tab")))
         assertEquals(NodeBounds(0, 300, 1080, 2250), screen.exploreGridBounds)
         assertEquals(InstagramSurface.SEARCH, screen.surface)
@@ -92,9 +96,15 @@ class InstagramScreenClassifierTest {
     @Test
     fun `home feed cover starts below the stories tray`() {
         val feed = ScreenNode(
-            viewId = "main_feed_list",
+            viewId = "android:id/list",
             bounds = NodeBounds(0, 200, 1080, 2250),
-            children = listOf(ScreenNode(viewId = "reels_tray_container", bounds = NodeBounds(0, 200, 1080, 520)))
+            children = listOf(
+                ScreenNode(
+                    contentDescription = "conteneur barre des reel",
+                    bounds = NodeBounds(0, 200, 1080, 520),
+                    children = listOf(ScreenNode(viewId = "outer_container", bounds = NodeBounds(0, 200, 330, 520)))
+                )
+            )
         )
         val screen = InstagramScreenClassifier.classify(root(feed, bottomBar("feed_tab")))
         assertEquals(NodeBounds(0, 520, 1080, 2250), screen.homeFeedBounds)
@@ -122,5 +132,39 @@ class InstagramScreenClassifierTest {
         val screen = InstagramScreenClassifier.classify(root(ScreenNode(text = "Comptes")))
         assertNull(screen.searchResultTabs)
         assertFalse(screen.reelViewer)
+    }
+
+    @Test
+    fun `search typeahead list is not an explore grid`() {
+        val typeahead = ScreenNode(
+            viewId = "recycler_view",
+            bounds = NodeBounds(0, 300, 1080, 2250),
+            children = listOf(ScreenNode(viewId = "row_search_user_container", bounds = NodeBounds(0, 300, 1080, 480)))
+        )
+        assertNull(InstagramScreenClassifier.classify(root(typeahead, bottomBar("search_tab"))).exploreGridBounds)
+    }
+
+    @Test
+    fun `profile page tabs are not mistaken for the bottom profile tab`() {
+        val profileGridTab = ScreenNode(viewId = "profile_tab_icon_view", isSelected = true, bounds = NodeBounds(0, 1400, 300, 1500))
+        val screen = InstagramScreenClassifier.classify(root(profileGridTab, bottomBar("feed_tab")))
+        assertEquals(InstagramTab.HOME, screen.selectedTab)
+    }
+
+    @Test
+    fun `story viewer is detected`() {
+        assertTrue(InstagramScreenClassifier.classify(root(ScreenNode(viewId = "reel_viewer_root"))).storyViewer)
+    }
+
+    @Test
+    fun `explore cover starts below the search bar`() {
+        val grid = ScreenNode(
+            viewId = "recycler_view",
+            bounds = NodeBounds(0, 104, 1220, 2520),
+            children = listOf(ScreenNode(viewId = "grid_card_layout_container", bounds = NodeBounds(0, 273, 402, 811)))
+        )
+        val searchBar = ScreenNode(viewId = "action_bar_search_edit_text", bounds = NodeBounds(36, 104, 956, 210))
+        val screen = InstagramScreenClassifier.classify(root(grid, searchBar, bottomBar("search_tab")))
+        assertEquals(NodeBounds(0, 210, 1220, 2520), screen.exploreGridBounds)
     }
 }

@@ -1,7 +1,7 @@
 # Clairjour — SUIVI.md
 
 ## 🧭 Ligne directrice
-**État** (2026-10-06, v1.1.0-dev) : Bouclier Instagram codé (package `shield/` + écran Paramètres → Bouclier Instagram), `assembleDebug` OK, 48 tests unitaires OK (dont 23 bouclier). Prochaine priorité : **B6 calibration des sélecteurs sur téléphone** — les IDs Instagram dans `InstagramSelectors.kt` sont des candidats non vérifiés.
+**État** (2026-10-06, v1.1.0-dev) : **Bouclier Instagram terminé et validé sur téléphone** (Instagram 449, HyperOS) — les 8 règles testées en réel (Reels → accueil, reel DM unique, reels ailleurs, reels profils, grille Explorer masquée, recherche forcée sur Comptes, fil masqué, stories), cache retiré hors Instagram, dialogue 30 s OK. 52 tests unitaires OK. Prochaine priorité : usage réel quelques jours, puis release signée + déclaration Accessibilité Play Console.
 
 ## ✅ Fait (v0.1 + v0.2)
 ### v0.1 initial
@@ -56,8 +56,8 @@ Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle i
 - [x] **B3** Service Android : capture arbre, debounce, actions (BACK, clic, overlay `TYPE_ACCESSIBILITY_OVERLAY`), lecture règles via DataStore
 - [x] **B4** UI : écran « Bouclier Instagram » (statut service, interrupteurs, dialogue 30 s pour désactiver, avertissement Play Store avant activation, mode diagnostic en debug)
 - [x] **B5** Tests unitaires classifieur + moteur
-- [ ] **B6** Calibration des sélecteurs sur téléphone (adb + logcat `ClairjourShield`) et tests réels des 8 règles
-- [ ] **B7** Build debug + tests + commit/push
+- [x] **B6** Calibration des sélecteurs sur téléphone (adb + logcat `ClairjourShield`) et tests réels des 8 règles
+- [x] **B7** Build debug + tests + commit/push
 
 ## ⏳ Reste à faire
 - [ ] Installer et tester APK sur téléphone (`adb install app-debug.apk`)
@@ -68,6 +68,9 @@ Principe : `AccessibilityService` qui lit l'écran d'Instagram (app officielle i
 - [ ] **v0.3 features possibles** : auto-backup WorkManager (nécessite décision sur stockage passphrase), Vico 2.0.0 stable dès sortie, remontée des raisons perso sur HomeScreen
 
 ## 📋 Notes / gotchas
+- **Bouclier — calibration** : la version debug embarque une télécommande (`adb shell am broadcast -a com.clairjour.shield.DEBUG -e command dump|back|click_id|click_label|scroll|tap|type|enter|rule_on|rule_off|shield_on|shield_off -e argument '...'`), logs sous le tag `ClairjourShield`. Le geste `tap` n'existe qu'en debug (`src/debug/res/xml/instagram_shield_service.xml` ajoute `canPerformGestures`).
+- **Bouclier — « Paramètre restreint »** (Android 13+, app hors Play Store) : l'interrupteur d'accessibilité est grisé → `adb shell cmd appops set com.clairjour.app.debug ACCESS_RESTRICTED_SETTINGS allow` (ou Infos appli → ⋮ → Autoriser les paramètres restreints).
+- **Bouclier — limites connues** : les vidéos qui se lancent toutes seules dans le fil ne sont pas bloquées (seulement à l'ouverture en plein écran) ; les libellés EN des onglets de recherche n'ont pas été vérifiés (interface testée en FR).
 - **Téléphone de test (Redmi Note 13 Pro+, HyperOS / Android 14, Instagram 449.0.0.52.84)** : sans l'option « Débogage USB (paramètres de sécurité) », adb refuse `settings put secure` (`SecurityException: WRITE_SECURE_SETTINGS`) et `input tap/keyevent` (`INJECT_EVENTS`). `uiautomator dump` échoue sur Instagram (« could not get idle state », vidéos) → calibrer via le mode diagnostic du service + `adb logcat -s ClairjourShield`. Sous Git Bash, préfixer `MSYS_NO_PATHCONV=1` pour les chemins `/sdcard/...`. Si l'appareil est `offline` : `adb kill-server` puis `adb devices`.
 - **Bouclier — sélecteurs Instagram** : tous dans `shield/InstagramSelectors.kt` (Instagram appelle les Reels « clips » et les Stories « reels »). Après une MAJ Instagram qui casse la détection : activer le mode diagnostic (debug), `adb logcat -s ClairjourShield`, corriger les IDs.
 - **Bouclier — pas de filtre `packageNames`** dans `instagram_shield_service.xml` : volontaire, sinon le service ne voit pas Instagram passer en arrière-plan et le cache opaque resterait sur l'écran d'accueil. Les événements des autres apps sont ignorés dans le code.
